@@ -9,7 +9,7 @@ import json
 import logging
 import xml.etree.ElementTree as etree
 import spacy
-import StringIO
+from io import StringIO
 
 from pke.data_structures import Document
 
@@ -154,7 +154,7 @@ class RawTextReader(Reader):
                 spacy, default to 1,000,000 characters (1mb).
             spacy_model (model): an already loaded spacy model.
         """
-        
+
         tokenList = []
         for line in StringIO.StringIO(text):        
             tmp = line.split('<phrase>')
