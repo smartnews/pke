@@ -10,6 +10,7 @@ import logging
 import xml.etree.ElementTree as etree
 import spacy
 from io import StringIO
+import io
 
 from pke.data_structures import Document
 

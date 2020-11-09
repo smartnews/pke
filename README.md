@@ -9,6 +9,11 @@ ships with supervised models trained on the
 
 [![Build Status](https://travis-ci.org/boudinfl/pke.svg?branch=master)](https://travis-ci.org/boudinfl/pke)
 
+Eric Zhou's Release Note for version 1.8.1-seg: 
+
+Comparing to the public version 1.8.1 at https://github.com/boudinfl/pke, this updated version 1.8.1-seg can parse '\<phrase\>' bracket pairs produced by AutoPhrase in https://github.com/smartnews/HiExpan 
+
+
 ## Table of Contents
 
 * [Installation](#installation)
@@ -22,7 +27,7 @@ ships with supervised models trained on the
 To pip install `pke` from github:
 
 ```bash
-pip install git+https://github.com/boudinfl/pke.git
+pip install git+https://github.com/smartnews/pke.git
 ```
 
 `pke` also requires external resources that can be obtained using:
