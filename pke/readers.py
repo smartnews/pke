@@ -9,6 +9,7 @@ import json
 import logging
 import xml.etree.ElementTree as etree
 import spacy
+import StringIO
 
 from pke.data_structures import Document
 
@@ -174,6 +175,93 @@ class RawTextReader(Reader):
             spacy_model.add_pipe(spacy_model.create_pipe('sentencizer'))
 
         spacy_model = fix_spacy_for_french(spacy_model)
+#        spacy_doc = spacy_model(text)
+
+        tokenList = []
+        for line in StringIO.StringIO(text):        
+            tmp = line.split('<phrase>')
+            if len(tmp) <= 2:
+                continue
+            entityMentions = []
+            for seg in tmp:
+                temp2 = seg.split('</phrase>')
+                if (len(temp2) > 1):
+                    entityMentions.append(('_').join(temp2[0].split(' ')))
+            tokenList += entityMentions
+        sentenceList.append(tokenList)    
+
+        spacy_model.tokenizer = spacy_model.tokenizer.tokens_from_list
+        spacy_model.(sentenceList)
+        sentences = []
+        for sentence_id, sentence in enumerate(spacy_doc.sents):
+            sentences.append({
+                "words": [token.text for token in sentence],
+                "lemmas": [token.lemma_ for token in sentence],
+                # FIX : This is a fallback if `fix_spacy_for_french` does not work
+                "POS": [token.pos_ or token.tag_ for token in sentence],
+                "char_offsets": [(token.idx, token.idx + len(token.text))
+                                     for token in sentence]
+            })
+
+        doc = Document.from_sentences(sentences,
+                                      input_file=kwargs.get('input_file', None),
+                                      **kwargs)
+
+        return doc
+
+class RawTextReader_backup(Reader):
+    """Reader for raw text."""
+
+    def __init__(self, language=None):
+        """Constructor for RawTextReader.
+
+        Args:
+            language (str): language of text to process.
+        """
+
+        self.language = language
+
+        if language is None:
+            self.language = 'en'
+
+    def read(self, text, **kwargs):
+        """Read the input file and use spacy to pre-process.
+
+        Spacy model selection: By default this function will load the spacy
+        model that is closest to the `language` parameter ('fr' language will
+        load the spacy model linked to 'fr' or any 'fr_core_web_*' available
+        model). In order to select the model that will be used please provide a
+        preloaded model via the `spacy_model` parameter, or link the model you
+        wish to use to the corresponding language code
+        `python3 -m spacy link spacy_model lang_code`.
+
+        Args:
+            text (str): raw text to pre-process.
+            max_length (int): maximum number of characters in a single text for
+                spacy, default to 1,000,000 characters (1mb).
+            spacy_model (model): an already loaded spacy model.
+        """
+
+        spacy_model = kwargs.get('spacy_model', None)
+
+        if spacy_model is None:
+            max_length = kwargs.get('max_length', 10**6)
+            try:
+                spacy_model = spacy.load(
+                    str2spacy(self.language), max_length=max_length,
+                    disable=['ner', 'textcat', 'parser'])
+            except OSError:
+                logging.warning('No spacy model for \'{}\' language.'.format(self.language))
+                logging.warning('Falling back to using english model. There might '
+                    'be tokenization and postagging errors. A list of available '
+                    'spacy model is available at https://spacy.io/models.'.format(
+                        self.language))
+                spacy_model = spacy.load(
+                    str2spacy('en'), max_length=max_length,
+                    disable=['ner', 'textcat', 'parser'])
+            spacy_model.add_pipe(spacy_model.create_pipe('sentencizer'))
+
+        spacy_model = fix_spacy_for_french(spacy_model)
         spacy_doc = spacy_model(text)
 
         sentences = []
@@ -192,4 +280,3 @@ class RawTextReader(Reader):
                                       **kwargs)
 
         return doc
-
