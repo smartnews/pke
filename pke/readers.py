@@ -10,6 +10,7 @@ import logging
 import xml.etree.ElementTree as etree
 import spacy
 from io import StringIO
+import io
 
 from pke.data_structures import Document
 
@@ -156,7 +157,7 @@ class RawTextReader(Reader):
         """
 
         tokenList = []
-        for line in StringIO.StringIO(text):        
+        for line in io.StringIO(text):        
             tmp = line.split('<phrase>')
             if len(tmp) <= 2:
                 continue
