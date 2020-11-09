@@ -154,29 +154,7 @@ class RawTextReader(Reader):
                 spacy, default to 1,000,000 characters (1mb).
             spacy_model (model): an already loaded spacy model.
         """
-
-        spacy_model = kwargs.get('spacy_model', None)
-
-        if spacy_model is None:
-            max_length = kwargs.get('max_length', 10**6)
-            try:
-                spacy_model = spacy.load(
-                    str2spacy(self.language), max_length=max_length,
-                    disable=['ner', 'textcat', 'parser'])
-            except OSError:
-                logging.warning('No spacy model for \'{}\' language.'.format(self.language))
-                logging.warning('Falling back to using english model. There might '
-                    'be tokenization and postagging errors. A list of available '
-                    'spacy model is available at https://spacy.io/models.'.format(
-                        self.language))
-                spacy_model = spacy.load(
-                    str2spacy('en'), max_length=max_length,
-                    disable=['ner', 'textcat', 'parser'])
-            spacy_model.add_pipe(spacy_model.create_pipe('sentencizer'))
-
-        spacy_model = fix_spacy_for_french(spacy_model)
-#        spacy_doc = spacy_model(text)
-
+        
         tokenList = []
         for line in StringIO.StringIO(text):        
             tmp = line.split('<phrase>')
@@ -190,22 +168,23 @@ class RawTextReader(Reader):
             tokenList += entityMentions
         sentenceList.append(tokenList)    
 
-        spacy_model.tokenizer = spacy_model.tokenizer.tokens_from_list
-        spacy_model.(sentenceList)
-        sentences = []
-        for sentence_id, sentence in enumerate(spacy_doc.sents):
-            sentences.append({
-                "words": [token.text for token in sentence],
-                "lemmas": [token.lemma_ for token in sentence],
-                # FIX : This is a fallback if `fix_spacy_for_french` does not work
-                "POS": [token.pos_ or token.tag_ for token in sentence],
-                "char_offsets": [(token.idx, token.idx + len(token.text))
-                                     for token in sentence]
-            })
+        nlp.spacy.load('en')
+        nlp.tokenizer = nlp.tokenizer.tokens_from_list
+        for spacy_doc in spacy.pipe(sentenceList):
+            sentences = []
+            for sentence_id, sentence in enumerate(spacy_doc.sents):
+                sentences.append({
+                    "words": [token.text for token in sentence],
+                    "lemmas": [token.lemma_ for token in sentence],
+                    # FIX : This is a fallback if `fix_spacy_for_french` does not work
+                    "POS": [token.pos_ or token.tag_ for token in sentence],
+                    "char_offsets": [(token.idx, token.idx + len(token.text))
+                                        for token in sentence]
+                })
 
-        doc = Document.from_sentences(sentences,
-                                      input_file=kwargs.get('input_file', None),
-                                      **kwargs)
+            doc = Document.from_sentences(sentences,
+                                        input_file=kwargs.get('input_file', None),
+                                        **kwargs)
 
         return doc
 
