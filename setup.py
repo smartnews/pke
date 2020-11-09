@@ -1,7 +1,7 @@
 from distutils.core import setup
 
 setup(name='pke',
-      version='1.8.1',
+      version='1.8.1-seg',
       description='Python Keyphrase Extraction module',
       author='pke contributors',
       author_email='florian.boudin@univ-nantes.fr',
@@ -9,7 +9,7 @@ setup(name='pke',
       packages=['pke', 'pke.unsupervised', 'pke.supervised',
                 'pke.supervised.feature_based', 'pke.unsupervised.graph_based',
                 'pke.unsupervised.statistical', 'pke.supervised.neural_based'],
-      url="https://github.com/boudinfl/pke",
+      url="https://github.com/smartnews/pke",
       install_requires=[
           'nltk',
           'networkx',

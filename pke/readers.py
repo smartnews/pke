@@ -155,23 +155,40 @@ class RawTextReader(Reader):
             spacy_model (model): an already loaded spacy model.
         """
 
-        tokenList = []
-        for line in StringIO.StringIO(text):        
+        sentenceList = []
+        for line in StringIO(text):        
+            line = line.strip()
             tmp = line.split('<phrase>')
-            if len(tmp) <= 2:
-                continue
             entityMentions = []
+            if len(tmp) <= 2:
+                #no phrase
+                other_parts = tmp[0].split(' ')
+                if(other_parts is not None):
+                    while('' in other_parts):
+                        other_parts.remove('')
+                    entityMentions += other_parts
             for seg in tmp:
                 temp2 = seg.split('</phrase>')
                 if (len(temp2) > 1):
-                    entityMentions.append(('_').join(temp2[0].split(' ')))
-            tokenList += entityMentions
-        sentenceList.append(tokenList)    
+                    entityMentions.append((' ').join(temp2[0].split(' ')))
+                    if (temp2[1] != ''):
+                        other_parts = temp2[1].split(' ')
+                        if(other_parts is not None):
+                            while('' in other_parts):
+                                other_parts.remove('')
+                            entityMentions += other_parts
+                elif temp2[0] != ' ' and temp2[0] != '':
+                    other_parts = temp2[0].split(' ')
+                    if(other_parts is not None):
+                        while('' in other_parts):
+                            other_parts.remove('')
+                        entityMentions += other_parts
+            sentenceList.append(entityMentions)    
 
-        nlp.spacy.load('en')
+        nlp = spacy.load('en')
         nlp.tokenizer = nlp.tokenizer.tokens_from_list
-        for spacy_doc in spacy.pipe(sentenceList):
-            sentences = []
+        sentences = []
+        for spacy_doc in nlp.pipe(sentenceList):
             for sentence_id, sentence in enumerate(spacy_doc.sents):
                 sentences.append({
                     "words": [token.text for token in sentence],
@@ -181,11 +198,9 @@ class RawTextReader(Reader):
                     "char_offsets": [(token.idx, token.idx + len(token.text))
                                         for token in sentence]
                 })
-
-            doc = Document.from_sentences(sentences,
+        doc = Document.from_sentences(sentences,
                                         input_file=kwargs.get('input_file', None),
                                         **kwargs)
-
         return doc
 
 class RawTextReader_backup(Reader):
